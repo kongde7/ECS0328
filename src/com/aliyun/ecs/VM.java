@@ -110,7 +110,7 @@ public class VM
 		}
 	}
 	
-	public int ReadOne( int num, String fileName, Times times, Release rel ) throws IOException
+	public int ReadOne( int num, String fileName, Times times ) throws IOException
 	{
 		Table table = new Table();
 		int i = -1;
@@ -138,19 +138,14 @@ public class VM
 					//获取当前时分秒作为创建时分秒
 					createTime = createDate + " " + times.getTime();
 					
-					//检测是不是当天释放
-					if( createDate.contentEquals( releaseDate ) )
-					{
-						releaseTime = releaseDate + " " + "23:59:59";
-					}
-					else if( releaseDate.contentEquals( "\\N" ) )
+					//检测是不是无限期释放
+					if( releaseDate.contentEquals( "\\N" ) )
 					{
 						releaseTime = releaseDate;
 					}
 					else
 					{
 						releaseTime = releaseDate + " " + "23:59:59";
-						rel.Add( times.getNum(), releaseDate, vmId );
 					}
 
 					
@@ -231,7 +226,7 @@ public class VM
 		String line;
 		VM vm = null;
 		
-		BufferedWriter bw = new BufferedWriter( new FileWriter( "vm222.csv", true ) );
+		BufferedWriter bw = new BufferedWriter( new FileWriter( "vm.csv", true ) );
 		for ( i = 0; i < vmList.size(); i++ )
 		{
 			vm = vmList.get(i);
@@ -250,38 +245,6 @@ public class VM
 			bw.write( line );
 			bw.newLine();
 		}
-		bw.close();
-	}
-	
-	public void WriteOne( VM vm, Times times ) throws IOException
-	{
-		String outputDate;
-		String vmId;
-		String status;
-		String ncId;
-		String vmType;
-		String cpu;
-		String memory;
-		String createTime;
-		String releaseTime;
-		
-		int i;
-		String line;
-		
-		BufferedWriter bw = new BufferedWriter( new FileWriter( "vm222.csv", true ) );
-		outputDate = "\"" + times.getDate() + "\"" + ",";
-		vmId = "\"" + vm.vmId + "\"" + ",";
-		status = "\"" + "release" + "\"" + ",";
-		ncId = "\"nc_" + String.valueOf( vm.ncId ) + "\"" + ",";
-		vmType = "\"" + vm.vmType + "\"" + ",";
-		cpu = "\"" + String.valueOf( vm.cpu ) + "\"" + ",";
-		memory = "\"" + String.valueOf( vm.memory ) + "\"" + ",";
-		createTime = "\"" + vm.createTime + "\"" + ",";
-		releaseTime = "\"" + vm.releaseTime + "\"";
-		
-		line = outputDate + vmId + status + ncId + vmType + cpu + memory + createTime + releaseTime;
-		bw.write( line );
-		bw.newLine();
 		bw.close();
 	}
 	

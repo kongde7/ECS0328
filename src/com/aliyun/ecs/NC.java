@@ -86,7 +86,7 @@ public class NC
 			nc.createTime = times.getDate();
 			ncListNew.add( nc );
 		}
-		price.buhuo = 3.6*(n1+n2+n3);
+		price.buhuo = 16*(n1+n2+n3);
 	}
 	
 	public void Add( int n1, int n2, int n3, ArrayList<NC> ncList, Times times, Resource res )

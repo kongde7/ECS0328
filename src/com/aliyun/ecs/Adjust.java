@@ -71,6 +71,7 @@ public class Adjust
 		}
 	}
 	
+	//来不及写，只完整写了填N1部分
 	public void Optimize( ArrayList<VM> vmList, ArrayList<NC> ncList, Resource res, Times times )
 	{
 		Table table = new Table();

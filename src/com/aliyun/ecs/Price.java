@@ -35,6 +35,7 @@ public class Price
 		
 		dayCost = sumN1 + sumN2 + sumN3 + oneCost;
 		sumCost = sumCost + dayCost;
+		//System.out.println( "当天物理机电费为：" + (dayCost-oneCost) );//到时候删
 		System.out.println( "当天成本计算："+ dayCost );//到时候删
 		
 		sy = ( dayIncome - dayCost ) / dayCost * 100;
@@ -56,6 +57,8 @@ public class Price
 		
 		oneCost = sumN1 + sumN2 + sumN3+buhuo+duangong;
 		sumCost = sumCost + oneCost;
+		//System.out.println( "当报备成本计算："+ buhuo );//到时候删
+		//System.out.println( "当断供成本计算："+ duangong );//到时候删
 		//System.out.println( "当天一次性成本计算："+ oneCost );//到时候删
 		return oneCost;
 	}

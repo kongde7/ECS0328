@@ -8,6 +8,7 @@ public class Times
 	int hour;
 	int min;
 	int sec;
+	static int count;
 	
 	public String TenDay()
 	{
@@ -40,6 +41,7 @@ public class Times
 	public void NextDay()
 	{
 		int howMany[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+		count++;
 		day++;
 		hour = 0;
 		min = 0;
