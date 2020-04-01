@@ -18,7 +18,7 @@ public class NC
 	String enableTime;
 	static int count;
 	
-	public void Enable( ArrayList<NC> ncList, ArrayList<NC> ncListNew, Times times )
+	public void Enable( ArrayList<NC> ncList, ArrayList<NC> ncListNew, Times times, Resource res )
 	{
 		int i;
 		NC nc = null;
@@ -33,6 +33,7 @@ public class NC
 			{
 				nc.status = "free";
 				ncList.add( nc );
+				res.Add(nc);
 				ncListNew.remove(i);
 				i--;
 			}
@@ -40,7 +41,7 @@ public class NC
 	}
 	
 	//±¨±¸
-	public void Report( int n1, int n2, int n3, ArrayList<NC> ncListNew, Times times )
+	public void Report( int n1, int n2, int n3, ArrayList<NC> ncListNew, Times times, Price price )
 	{
 		int i;
 		NC nc = null;
@@ -85,6 +86,7 @@ public class NC
 			nc.createTime = times.getDate();
 			ncListNew.add( nc );
 		}
+		price.buhuo = 3.6*(n1+n2+n3);
 	}
 	
 	public void Add( int n1, int n2, int n3, ArrayList<NC> ncList, Times times, Resource res )

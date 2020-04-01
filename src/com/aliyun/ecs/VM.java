@@ -22,7 +22,7 @@ public class VM
 	String releaseDate;
 	String releaseTime;
 	
-	public void Assign( ArrayList<NC> ncList, Resource res )
+	public void Assign( ArrayList<NC> ncList, Resource res, Price price )
 	{
 		int i;
 		NC nc = null;
@@ -102,6 +102,11 @@ public class VM
 					}
 				}
 			}
+		}
+		if( ncId==0 )
+		{
+			price.duangong = 24*cpu;
+			//System.out.println( "¶Ï¹©1´Î" );
 		}
 	}
 	

@@ -38,8 +38,8 @@ public class Elastic
 		ArrayList<NC> ncList = new ArrayList<>();
 		ArrayList<NC> ncListNew = new ArrayList<>();
 		
-		nc.Add( 4, 5, 6, ncList, times, res );
-		price.OneCost( 4, 5, 6 );
+		nc.Add( 20, 100, 5, ncList, times, res );
+		price.OneCost( 10, 30, 5 );
 		
 		//构建vmList表，朝里顺序写入
 		ArrayList<VM> vmList = new ArrayList<>();
@@ -47,7 +47,7 @@ public class Elastic
 		ArrayList<VM> vmListB = new ArrayList<>();
 		ArrayList<VM> vmListC = new ArrayList<>();
 		
-		System.out.println( "开始遍历input_vm目录下的csv文件，这个过程大概需要3分钟..." );
+		System.out.println( "开始遍历目录下的csv文件，这个过程大概需要5分钟..." );
 		while( true )
 		{
 			date = times.getDate();
@@ -63,17 +63,10 @@ public class Elastic
 				//判断是不是第0秒，是的话使能物理机
 				if( times.getTime().contentEquals( "00:00:00" ) )
 				{
-					nc.Enable( ncList, ncListNew, times );
+					nc.Enable( ncList, ncListNew, times, res );
 				}
 				
-				//System.out.println( i );
 				times.NextSec();
-				//读入之前先看当前秒有没有释放事件
-				//System.out.println( i );
-				//if( rel.sec[i] == 1 && rel.timing[i].contentEquals( times.getDate() ) )
-				//{
-				//	res.releaseOne( i, rel, vmList, ncList, table, times );
-				//}
 				
 				//存入一行vm数据
 				vm = new VM();
@@ -84,9 +77,9 @@ public class Elastic
 					break;
 				}
 				else flag=0;
-				//System.out.println( "现在获取的ID：" + vm.ReadOne( i, fileName, times, rel) );
+				
 				//存表之前先分配
-				vm.Assign( ncList, res );
+				vm.Assign( ncList, res, price );
 				
 				//资源表也要同步写入
 				res.Assign( vm, table );
@@ -116,7 +109,6 @@ public class Elastic
 					//当天23点59分，计算收益和成本
 					price.Income( table, res );
 					price.Cost( table, res );
-					//System.out.println( "main成本汇总：" +  price.sumCost );
 					
 					//当天23点59分，释放当天要释放的资源，A是存量，B是释放
 					for ( i = 0; i < vmList.size(); i++ )
@@ -135,11 +127,13 @@ public class Elastic
 					vmList.clear();
 					res.release( vmListB, ncList, table );
 					vm.Write( vmListB, times );
-					//nc.Write( ncList, times );//试着打印一遍
 					
+					
+					//调优流程,来不及了就不调优了
+					//adjust.Optimize( vmListA, ncList, res, times );
 
 					//报备测试
-					nc.Report( 1, 2, 3, ncListNew, times );
+					nc.Report( 2, 5, 1, ncListNew, times, price );
 					nc.Write( "new_nc1.csv", ncListNew, times );
 					
 					
@@ -148,6 +142,8 @@ public class Elastic
 					price.oneCost=0;
 					price.dayCost=0;
 					price.dayCost=0;
+					price.buhuo = 0;
+					price.duangong =0;
 				}
 			}
 			
@@ -205,8 +201,8 @@ public class Elastic
 					
 
 					//报备测试
-					nc.Report( 1, 2, 3, ncListNew, times );
-					nc.Write( "new_nc1.csv", ncListNew, times );
+					//nc.Report( 1, 2, 3, ncListNew, times, price );
+					//nc.Write( "new_nc1.csv", ncListNew, times );
 					
 					
 					times.NextDay();
@@ -214,6 +210,8 @@ public class Elastic
 					price.oneCost=0;
 					price.dayCost=0;
 					price.dayCost=0;
+					price.buhuo =0;
+					price.duangong=0;
 					//本块跟上面重复
 					
 					break;

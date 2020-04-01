@@ -71,7 +71,7 @@ public class Adjust
 		}
 	}
 	
-	public void Optimize( ArrayList<VM> vmList, ArrayList<NC> ncListNew, Resource res, Times times )
+	public void Optimize( ArrayList<VM> vmList, ArrayList<NC> ncList, Resource res, Times times )
 	{
 		Table table = new Table();
 		VM vm = null;
@@ -86,33 +86,109 @@ public class Adjust
 		int n2 = res.numN2;
 		int n3 = res.numN3;
 		
-		int i, x, y, z;
+		int i, x, y, z, temp;
+		
+		//先把NC表全部物理机全部清除VM，等下重新分配
+		for ( i = 0; i < ncList.size(); i++ )
+		{
+			nc = ncList.get(i);
+			nc.usedCpu = 0;
+			nc.usedMemory = 0;
+		}
 		
 		//先填N1
 		x = c1 / 32;
+		temp = c1;
 		if( n1 >= x )
 		{
-			c1 = c1 - 32 * x;
-			
-			//遍历vm表，更改值
+			//遍历VM表，更改ncid
 			for ( i = 0; i < vmList.size(); i++ )
 			{
-				vm = vmList.get(i);
-				if( vm.vmType.contentEquals( table.nameC1_2xl ) )
+				if( temp <= c1 - 32 * x )
 				{
-					
+					break;
 				}
-			}
-			
-			//遍历NC表，更改值
-			for ( i = 0; i < ncListNew.size(); i++ )
-			{
-				nc = ncListNew.get(i);
-				if( nc.machineType.contentEquals( table.nameN1 ) )
+				else
 				{
+					vm = vmList.get(i);
 					
+					//如果是2xl型号
+					if( vm.vmType.contentEquals( table.nameC1_2xl ) )
+					{
+						//遍历NC表，填写使用的内存和CPU，并把新的ncId给n1
+						for ( i = 0; i < ncList.size(); i++ )
+						{
+							nc = ncList.get(i);
+							if( nc.machineType.contentEquals( table.nameN1 ) )
+							{
+								if( nc.totalCpu - nc.usedCpu >= 8 )
+								{
+									if( nc.totalMemory - nc.usedMemory >= 16 )
+									{
+										nc.usedCpu = nc.usedCpu + 8;
+										nc.usedMemory = nc.usedMemory + 16;
+										vm.ncId = nc.ncId;
+										temp = temp - 4;
+										break;
+									}
+								}
+							}
+						}
+					}
+					
+					//如果是xl型号
+					if( vm.vmType.contentEquals( table.nameC1_xl ) )
+					{
+						//遍历NC表，填写使用的内存和CPU，并把新的ncId给n1
+						for ( i = 0; i < ncList.size(); i++ )
+						{
+							nc = ncList.get(i);
+							if( nc.machineType.contentEquals( table.nameN1 ) )
+							{
+								if( nc.totalCpu - nc.usedCpu >= 4 )
+								{
+									if( nc.totalMemory - nc.usedMemory >= 8 )
+									{
+										nc.usedCpu = nc.usedCpu + 4;
+										nc.usedMemory = nc.usedMemory + 8;
+										vm.ncId = nc.ncId;
+										temp = temp - 2;
+										break;
+									}
+								}
+							}
+						}
+					}
+					
+					//如果是l型号
+					if( vm.vmType.contentEquals( table.nameC1_l ) )
+					{
+						//遍历NC表，填写使用的内存和CPU，并把新的ncId给n1
+						for ( i = 0; i < ncList.size(); i++ )
+						{
+							nc = ncList.get(i);
+							if( nc.machineType.contentEquals( table.nameN1 ) )
+							{
+								if( nc.totalCpu - nc.usedCpu >= 2 )
+								{
+									if( nc.totalMemory - nc.usedMemory >= 4 )
+									{
+										nc.usedCpu = nc.usedCpu + 2;
+										nc.usedMemory = nc.usedMemory + 4;
+										vm.ncId = nc.ncId;
+										temp = temp - 1;
+										break;
+									}
+								}
+							}
+						}
+					}
 				}
+				
 			}
+			//调优完成，扣除需要c1的数量
+			//c1 = c1 - 32 * x;
+			c1 = temp;
 		}
 		else
 		{

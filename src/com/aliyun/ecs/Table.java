@@ -110,9 +110,4 @@ public class Table
 		perR1_2xl = 2.65;
 	}
 	
-	//输入需求的vm类型，可以放下就返回1，满了就返回0
-	public void Use()
-	{
-		
-	}
 }

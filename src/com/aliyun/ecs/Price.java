@@ -2,13 +2,15 @@ package com.aliyun.ecs;
 
 public class Price
 {
+	double buhuo;
+	double duangong;
 	double oneCost;
 	double sumIncome;
 	double dayIncome;
 	double sumCost;
 	double dayCost;
 	String date;
-	
+	//
 	public double Income( Table table, Resource res )
 	{
 		//单价乘以数量乘以24小时
@@ -52,7 +54,7 @@ public class Price
 		double sumN2 = perN2 * numN2;
 		double sumN3 = perN3 * numN3;
 		
-		oneCost = sumN1 + sumN2 + sumN3;
+		oneCost = sumN1 + sumN2 + sumN3+buhuo+duangong;
 		sumCost = sumCost + oneCost;
 		//System.out.println( "当天一次性成本计算："+ oneCost );//到时候删
 		return oneCost;
