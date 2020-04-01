@@ -144,7 +144,7 @@ public class VM
 					}
 					else
 					{
-						releaseTime = releaseDate + " " + times.getTime();
+						releaseTime = releaseDate + " " + "23:59:59";
 						rel.Add( times.getNum(), releaseDate, vmId );
 					}
 

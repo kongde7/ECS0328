@@ -9,6 +9,34 @@ public class Times
 	int min;
 	int sec;
 	
+	public String TenDay()
+	{
+		int howMany[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+		int years = year;
+		int months = month;
+		int days = day;
+		int i;
+		
+        if( year%4==0 && year%100!=0 || year%400==0 )
+        	howMany[1] = 29;
+		
+		for( i=1; i<11; i++ )
+		{
+			days++;
+			if( days>howMany[month-1] )
+			{
+				days = 1;
+				months++;
+			}
+			if( months>12 )
+			{
+				months = 1;
+				years++;
+			}
+		}
+		return String.format( "%04d-%02d-%02d", years, months, days );
+	}
+	
 	public void NextDay()
 	{
 		int howMany[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
@@ -59,7 +87,7 @@ public class Times
 		year = Integer.parseInt( cut[0] );
 		month = Integer.parseInt( cut[1] );
 		day = Integer.parseInt( cut[2] );
-		System.out.println( "times方法创建："+year +"年"+month+"月"+day );//到时候删
+		System.out.println( "初始化成功！当前日期：" + date );//到时候删
 	}
 	
 	public String getDate()

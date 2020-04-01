@@ -12,9 +12,9 @@ public class Price
 	public double Income( Table table, Resource res )
 	{
 		//单价乘以数量乘以24小时
-		double sumC1 = table.perC1_l * res.totalC1_l + table.perC1_xl * res.totalC1_xl + table.perC1_2xl * res.totalC1_2xl;
-		double sumG1 = table.perG1_l * res.totalG1_l + table.perG1_xl * res.totalG1_xl + table.perG1_2xl * res.totalG1_2xl;
-		double sumR1 = table.perR1_l * res.totalR1_l + table.perR1_xl * res.totalR1_xl + table.perR1_2xl * res.totalR1_2xl;
+		double sumC1 = table.perC1_l * res.numC1_l + table.perC1_xl * res.numC1_xl + table.perC1_2xl * res.numC1_2xl;
+		double sumG1 = table.perG1_l * res.numG1_l + table.perG1_xl * res.numG1_xl + table.perG1_2xl * res.numG1_2xl;
+		double sumR1 = table.perR1_l * res.numR1_l + table.perR1_xl * res.numR1_xl + table.perR1_2xl * res.numR1_2xl;
 		
 		dayIncome = ( sumC1 + sumG1 + sumR1 ) * 24;
 		sumIncome = sumIncome + dayIncome;

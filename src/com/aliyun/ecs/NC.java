@@ -15,9 +15,79 @@ public class NC
 	int usedCpu;
 	int usedMemory;
 	String createTime;
+	String enableTime;
 	static int count;
 	
-	public void Enable( int n1, int n2, int n3, ArrayList<NC> ncList, Times times, Resource res )
+	public void Enable( ArrayList<NC> ncList, ArrayList<NC> ncListNew, Times times )
+	{
+		int i;
+		NC nc = null;
+		String date = times.getDate();
+		
+		for ( i = 0; i < ncListNew.size(); i++ )
+		{
+			nc = ncListNew.get(i);
+			
+			//如果日期符合今天，就说明今天有新增的报备好的物理机
+			if( date.contentEquals( nc.enableTime ) )
+			{
+				nc.status = "free";
+				ncList.add( nc );
+				ncListNew.remove(i);
+				i--;
+			}
+		}
+	}
+	
+	//报备
+	public void Report( int n1, int n2, int n3, ArrayList<NC> ncListNew, Times times )
+	{
+		int i;
+		NC nc = null;
+		Times timePlus = new Times();
+		
+		for( i=1; i<=n1; i++ )
+		{
+			count++;
+			nc = new NC();
+			nc.ncId = nc.ncId + count;
+			nc.status = "init";
+			nc.totalCpu = 64;
+			nc.totalMemory = 128;
+			nc.machineType = "NT-1-2";
+			nc.enableTime = times.TenDay();
+			nc.createTime = times.getDate();
+			ncListNew.add( nc );
+		}
+		for( i=1; i<=n2; i++ )
+		{
+			count++;
+			nc = new NC();
+			nc.ncId = nc.ncId + count;
+			nc.status = "init";
+			nc.totalCpu = 96;
+			nc.totalMemory = 256;
+			nc.machineType = "NT-1-4";
+			nc.enableTime = times.TenDay();
+			nc.createTime = times.getDate();
+			ncListNew.add( nc );
+		}
+		for( i=1; i<=n3; i++ )
+		{
+			count++;
+			nc = new NC();
+			nc.ncId = nc.ncId + count;
+			nc.status = "init";
+			nc.totalCpu = 104;
+			nc.totalMemory = 516;
+			nc.machineType = "NT-1-8";
+			nc.enableTime = times.TenDay();
+			nc.createTime = times.getDate();
+			ncListNew.add( nc );
+		}
+	}
+	
+	public void Add( int n1, int n2, int n3, ArrayList<NC> ncList, Times times, Resource res )
 	{
 		int i;
 		NC nc = null;
@@ -63,7 +133,7 @@ public class NC
 		}
 	}
 	
-	public void Write( ArrayList<NC> ncList, Times times ) throws IOException
+	public void Write( String fileName, ArrayList<NC> ncList, Times times ) throws IOException
 	{
 		String outputDate;
 		String ncId;
@@ -79,7 +149,7 @@ public class NC
 		int i;
 		NC nc = null;
 		
-		BufferedWriter bw = new BufferedWriter( new FileWriter( "nc1.csv", true ) );
+		BufferedWriter bw = new BufferedWriter( new FileWriter( fileName, true ) );
 		for ( i = 0; i < ncList.size(); i++ )
 		{
 			nc = ncList.get(i);
