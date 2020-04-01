@@ -40,10 +40,10 @@ public class Price
 		double sumN2 = xn * res.totalCpuN2;
 		double sumN3 = xn * res.totalCpuN3;
 		
-		dayCost = sumN1 + sumN2 + sumN3 + oneCost;
+		dayCost = sumN1 + sumN2 + sumN3;
 		sumCost = sumCost + dayCost;
-		System.out.println( "当天物理机电费为：" + (dayCost-oneCost) );
-		System.out.println( "当天总成本为：" + String.format( "%.2f", dayCost ) );
+		System.out.println( "当天物理机电费成本：" + String.format( "%.2f", dayCost ) + "     当天总成本为：" + String.format( "%.2f", (dayCost+oneCost) ) );
+		dayCost = dayCost + oneCost;
 		
 		sy = ( dayIncome - dayCost ) / dayCost * 100;
 		
@@ -63,11 +63,10 @@ public class Price
 		double sumN2 = perN2 * numN2;
 		double sumN3 = perN3 * numN3;
 		
-		oneCost = sumN1 + sumN2 + sumN3 + buhuo + duangong;
+		oneCost = sumN1 + sumN2 + sumN3;
 		sumCost = sumCost + oneCost;
-		//System.out.println( "当天报备成本计算："+ buhuo );//到时候删
-		//System.out.println( "当天断供成本计算："+ duangong );//到时候删
-		//System.out.println( "当天一次性成本计算："+ oneCost );//到时候删
+		System.out.println( "当天物理机购买成本：" + String.format( "%.2f", oneCost ) + "     当天报备成本：" + String.format( "%.2f", buhuo ) + "     当天断供成本：" + String.format( "%.2f", duangong ) );
+		oneCost = oneCost + buhuo + duangong;
 		return oneCost;
 	}
 }

@@ -22,8 +22,8 @@ public class NC
 	String enableTime;
 	static int count;
 	
-	//Enable：报备的物理机可以开始服务
-	public void Enable( ArrayList<NC> ncList, ArrayList<NC> ncListNew, Times times, Resource res, Price price )
+	//Enable：报备的物理机可以开始服务，返回开始服务的物理机总数
+	public int Enable( ArrayList<NC> ncList, ArrayList<NC> ncListNew, Times times, Resource res, Price price )
 	{
 		Table table = new Table();
 		int i, a=0, b=0, c=0;
@@ -57,7 +57,11 @@ public class NC
 				
 			}
 		}
-		price.OneCost( a, b, c );
+		if( a!=0 || b!=0 || c!=0 )
+		{
+			price.OneCost( a, b, c );
+		}
+		return (a+b+c);
 	}
 	
 	//Report：报备三种物理机的台数，分别为n1，n2，n3

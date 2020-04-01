@@ -1,5 +1,6 @@
 package com.aliyun.ecs;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,13 +10,16 @@ public class Elastic
 {
 	public static void main( String[] args ) throws IOException
 	{
+		int reNC=0;
+		int newN1=0, newN2=0, newN3=0;
+		int logN1, logN2, logN3;
 		int a, b, c;
 		int i = 1;
 		int j;
 		int k=1;
 		int flag=0;
 		int temp=1;
-		String fileName = "input_vm_" + String.valueOf( k ) + ".csv";
+		String fileName = "input_vm" + File.separator + "input_vm_" + String.valueOf( k ) + ".csv";
 		VM vm = new VM();
 		NC nc = new NC();
 		Times times = new Times();
@@ -23,6 +27,7 @@ public class Elastic
 		Price price = new Price();
 		Resource res = new Resource();
 		String date;
+		Log log = null;
 		
 		//调优表测试
 		Adjust adjust = new Adjust();
@@ -43,16 +48,17 @@ public class Elastic
 		ArrayList<NC> ncList = new ArrayList<>();
 		ArrayList<NC> ncListNew = new ArrayList<>();
 		
-		nc.Add( 200, 600, 5, ncList, times, res );
-		price.OneCost( 200, 600, 5 );
-		
+		nc.Add( 50, 100, 10, ncList, times, res );
+		price.OneCost( 50, 100, 10 );
 		//构建vmList表，朝里顺序写入
 		ArrayList<VM> vmList = new ArrayList<>();
 		ArrayList<VM> vmListA = new ArrayList<>();
 		ArrayList<VM> vmListB = new ArrayList<>();
 		ArrayList<VM> vmListC = new ArrayList<>();
+		ArrayList<VM> vmListStop = new ArrayList<>();
+		ArrayList<Log> logList = new ArrayList<>();
 		
-		System.out.println( "开始遍历目录下的csv文件，这个过程大概需要5分钟..." );
+		System.out.println( "开始遍历input_vm目录下的csv文件，这个过程大概需要5分钟..." );
 		while( true )
 		{
 			date = times.getDate();
@@ -68,7 +74,7 @@ public class Elastic
 				//判断是不是第0秒，是的话使能物理机
 				if( times.getTime().contentEquals( "00:00:00" ) )
 				{
-					nc.Enable( ncList, ncListNew, times, res, price );
+					reNC = reNC - nc.Enable( ncList, ncListNew, times, res, price );
 				}
 				
 				times.NextSec();
@@ -84,10 +90,16 @@ public class Elastic
 				else flag=0;
 				
 				//存表之前先分配
-				vm.Assign( ncList, res, price );
+				if( vm.Assign( ncList, res, price ) == 0 )
+				{
+					vmListStop.add(vm);
+				}
+				else
+				{
+					//资源表也要同步写入
+					res.Assign( vm, table );
+				}
 				
-				//资源表也要同步写入
-				res.Assign( vm, table );
 				
 				vmList.add( vm );
 			}
@@ -114,6 +126,131 @@ public class Elastic
 					//当天23点59分，计算收益
 					price.Income( table, res );
 					
+					//调优流程,来不及了就不调优了
+					//adjust.Optimize( vmListA, ncList, res, times );
+					
+					//全新加入流程，报备新版
+					logN1 = 0;
+					logN2 = 0;
+					logN3 = 0;
+					log = new Log();
+					log.Count( vmList, vmListStop, times, res );
+					logList.add( log );
+					for ( i = 0; i < logList.size(); i++ )
+					{
+						log = logList.get(i);
+						logN1 = logN1 + log.cpuN1Today;
+						logN2 = logN2 + log.cpuN2Today;
+						logN3 = logN3 + log.cpuN3Today;
+						if( times.getDate().contentEquals( log.date ) )
+						{
+							//把CPU需求数除以64转换成物理机需求数，其中N1最多能分配64核，N2最多能分配96核，N3最多能分配64核
+							logN1 = logN1 / ( i + 1 ) / 64;
+							logN2 = logN2 / ( i + 1 ) / 96;
+							logN3 = logN3 / ( i + 1 ) / 64;
+							break;
+						}
+					}
+					if( logN1 > res.numN1 + reNC )
+					{
+						newN1 = logN1 - res.numN1 - reNC;
+					}
+					if( logN2 > res.numN2 + reNC )
+					{
+						newN2 = logN2 - res.numN2 - reNC;
+					}
+					if( logN3 > res.numN3 + reNC )
+					{
+						newN3 = logN3 - res.numN3 - reNC;
+					}
+					reNC = newN1 + newN2 + newN3;
+					System.out.println( "res.numN" + res.numN1+" "+reNC);
+					System.out.println( "N1、N2、N3需求量：" + logN1 +" "+ logN2 +" "+ logN3 +" "+ logList.size() );//到时候删
+					System.out.println( "N1、N2、N3报备：" + newN1 +" "+ newN2 +" "+ newN3 );//到时候删
+					
+					//计算要报备多少台NC
+					res.usedCpuN1 = 0;
+					res.usedCpuN2 = 0;
+					res.usedCpuN3 = 0;
+					res.usedMemoryN1 = 0;
+					res.usedMemoryN2 = 0;
+					res.usedMemoryN3 = 0;
+					for ( i = 0; i < ncList.size(); i++ )
+					{
+						nc = ncList.get(i);
+						if( nc.machineType.contentEquals( table.nameN1 ) )
+						{
+							res.usedCpuN1 = res.usedCpuN1 + nc.usedCpu;
+							res.usedMemoryN1 = res.usedMemoryN1 + nc.usedMemory;
+						}
+						else if( nc.machineType.contentEquals( table.nameN2 ) )
+						{
+							res.usedCpuN2 = res.usedCpuN2 + nc.usedCpu;
+							res.usedMemoryN2 = res.usedMemoryN2 + nc.usedMemory;
+						}
+						else if( nc.machineType.contentEquals( table.nameN3 ) )
+						{
+							res.usedCpuN3 = res.usedCpuN3 + nc.usedCpu;
+							res.usedMemoryN3 = res.usedMemoryN3 + nc.usedMemory;
+						}
+					}
+					/*
+					System.out.println( "N1物理机CPU总数：" + res.totalCpuN1 + "个" );//到时候删
+					System.out.println( "N2物理机CPU总数：" + res.totalCpuN2 + "个" );//到时候删
+					System.out.println( "N3物理机CPU总数：" + res.totalCpuN3 + "个" );//到时候删
+					System.out.println( "N1物理机使用到CPU：" + res.usedCpuN1 + "个" );//到时候删
+					System.out.println( "N2物理机使用到CPU：" + res.usedCpuN2 + "个" );//到时候删
+					System.out.println( "N3物理机使用到CPU：" + res.usedCpuN3 + "个" );//到时候删
+					*/
+					
+					//这里存在一个误区，剩余物理机的CPU多并不能代表可用的多，因为内存先满
+					
+					//如果够，不补货，不够了才补货
+					if( res.usedCpuN1 / times.count * 10 > res.numN1 * 64 - res.usedCpuN1 )
+					//if( res.usedCpuN1 / times.count * 10 > res.totalCpuN1 - res.usedCpuN1 || 0.5 * res.totalCpuN1 < res.usedCpuN1 )
+					{
+						a = res.usedCpuN1 / times.count / 64;
+					}
+					else a = 0;
+					if( res.usedCpuN2 / times.count * 10 > res.numN2 * 96 - res.usedCpuN2 )
+					//if( res.usedCpuN2 / times.count * 10 > res.totalCpuN2 - res.usedCpuN2 || 0.5 * res.totalCpuN2 < res.usedCpuN2 )
+					{
+						b = res.usedCpuN2 / times.count / 96;
+					}
+					else b = 0;
+					if( res.usedCpuN3 / times.count * 10 > res.numN3 * 64 - res.usedCpuN3 )
+					//if( res.usedCpuN3 / times.count * 10 > res.totalCpuN3 - res.usedCpuN3 || 0.5 * res.totalCpuN3 < res.usedCpuN3 )
+					{
+						c = res.usedCpuN3 / times.count / 64;
+					}
+					else c = 0;
+					/*
+					System.out.println( "当天用了N1物理机：" + res.usedCpuN1/64 + "台" );//到时候删
+					System.out.println( "当天用了N2物理机：" + res.usedCpuN2/96 + "台" );//到时候删
+					System.out.println( "当天用了N3物理机：" + res.usedCpuN3/64 + "台" );//到时候删
+					System.out.println( "当天剩余N1物理机：" + (res.numN1 * 64 - res.usedCpuN1)/64 + "台" );//到时候删
+					System.out.println( "当天剩余N2物理机：" + (res.numN2 * 96 - res.usedCpuN2)/96 + "台" );//到时候删
+					System.out.println( "当天剩余N3物理机：" + (res.numN3 * 64 - res.usedCpuN3)/64 + "台" );//到时候删
+					
+					if( a!=0 )
+						System.out.println( "报备N1物理机：" + a + "台" );//到时候删
+					if( b!=0 )
+						System.out.println( "报备N2物理机：" + b + "台" );//到时候删
+					if( c!=0 )
+						System.out.println( "报备N3物理机：" + c + "台" );//到时候删
+					*/
+					
+					//报备测试
+					
+					nc.Report( newN1, newN2, newN3, ncListNew, times, price );
+					newN1 = 0;
+					newN2 = 0;
+					newN3 = 0;
+					nc.Write( "new_nc.csv", ncListNew, times );
+					//报备成本
+					price.OneCost( 0, 0, 0 );
+					price.Cost( table, res );
+					
 					//当天23点59分，释放当天要释放的资源，A是存量，B是释放
 					for ( i = 0; i < vmList.size(); i++ )
 					{
@@ -132,9 +269,88 @@ public class Elastic
 					res.release( vmListB, ncList, table );
 					vm.Write( vmListB, times );
 					
+					times.NextDay();
+					flag = 0;
+					price.oneCost=0;
+					price.dayCost=0;
+					price.dayCost=0;
+					price.buhuo = 0;
+					price.duangong =0;
+				}
+			}
+			
+
+			
+			else if( i>=10001 )
+			{
+				if( k<20 )
+				{
+					k++;
+					fileName = "input_vm" + File.separator + "input_vm_" + String.valueOf( k ) + ".csv";
+					temp = 1;
+				}
+				else
+				{
+					//以下块为重复，因为是最后一天，单独加一个循环
+					//当天结束，写当天NC流水和VM流水
+					//vm.Write( vmList, times );
+					nc.Write( "nc.csv", ncList, times );
+					
+					for ( i = 0; i < vmList.size(); i++ )
+					{
+						vm = vmList.get(i);
+						if( date.contentEquals( vm.createDate ) )
+						{
+							vmListC.add(vm);
+						}
+					}
+					vm.Write( vmListC, times );
+					vmListC.clear();
+					
+					//当天23点59分，计算收益
+					price.Income( table, res );
 					
 					//调优流程,来不及了就不调优了
 					//adjust.Optimize( vmListA, ncList, res, times );
+					
+					//全新加入流程，报备新版
+					logN1 = 0;
+					logN2 = 0;
+					logN3 = 0;
+					log = new Log();
+					log.Count( vmList, vmListStop, times, res );
+					logList.add( log );
+					for ( i = 0; i < logList.size(); i++ )
+					{
+						log = logList.get(i);
+						logN1 = logN1 + log.cpuN1Today;
+						logN2 = logN2 + log.cpuN2Today;
+						logN3 = logN3 + log.cpuN3Today;
+						//System.out.println( "遍历当天结果：" + log.cpuN1Today +" "+ log.cpuN2Today +" "+ log.cpuN3Today + times.getDate()+log.date +i );//到时候删
+						if( times.getDate().contentEquals( log.date ) )
+						{
+							//把CPU需求数除以64转换成物理机需求数，其中N1最多能分配64核，N2最多能分配96核，N3最多能分配64核
+							logN1 = logN1 / ( i + 1 ) / 64;
+							logN2 = logN2 / ( i + 1 ) / 96;
+							logN3 = logN3 / ( i + 1 ) / 64;
+							break;
+						}
+					}
+					if( logN1 > res.numN1 + reNC )
+					{
+						newN1 = logN1 - res.numN1 - reNC;
+					}
+					if( logN2 > res.numN2 + reNC )
+					{
+						newN2 = logN2 - res.numN2 - reNC;
+					}
+					if( logN3 > res.numN3 + reNC )
+					{
+						newN3 = logN3 - res.numN3 - reNC;
+					}
+					System.out.println( "" + res.numN1 + " " + reNC );
+					System.out.println( "N1、N2、N3需求量：" + logN1 +" "+ logN2 +" "+ logN3 +" "+ logList.size() );//到时候删
+					System.out.println( "N1、N2、N3报备：" + newN1 +" "+ newN2 +" "+ newN3 );//到时候删
 					
 					//计算要报备多少台NC
 					res.usedCpuN1 = 0;
@@ -163,40 +379,44 @@ public class Elastic
 						}
 					}
 					
-					//System.out.println( "N1物理机CPU总数：" + res.totalCpuN1 + "个" );//到时候删
-					//System.out.println( "N2物理机CPU总数：" +res.totalCpuN2 + "个" );//到时候删
-					//System.out.println( "N3物理机CPU总数：" + res.totalCpuN3 + "个" );//到时候删
-					//System.out.println( "N1物理机使用到CPU：" + res.usedCpuN1 + "个" );//到时候删
-					//System.out.println( "N2物理机使用到CPU：" + res.usedCpuN2 + "个" );//到时候删
-					//System.out.println( "N3物理机使用到CPU：" + res.usedCpuN3 + "个" );//到时候删
+					/*
+					System.out.println( "N1物理机CPU总数：" + res.totalCpuN1 + "个" );//到时候删
+					System.out.println( "N2物理机CPU总数：" + res.totalCpuN2 + "个" );//到时候删
+					System.out.println( "N3物理机CPU总数：" + res.totalCpuN3 + "个" );//到时候删
+					System.out.println( "N1物理机使用到CPU：" + res.usedCpuN1 + "个" );//到时候删
+					System.out.println( "N2物理机使用到CPU：" + res.usedCpuN2 + "个" );//到时候删
+					System.out.println( "N3物理机使用到CPU：" + res.usedCpuN3 + "个" );//到时候删
+					*/
 					
+					//这里存在一个误区，剩余物理机的CPU多并不能代表可用的多，因为内存先满
 					
 					//如果够，不补货，不够了才补货
-					if( res.usedCpuN1 / times.count * 10 > res.totalCpuN1 - res.usedCpuN1 )
+					if( res.usedCpuN1 / times.count * 10 > res.numN1 * 64 - res.usedCpuN1 )
 					//if( res.usedCpuN1 / times.count * 10 > res.totalCpuN1 - res.usedCpuN1 || 0.5 * res.totalCpuN1 < res.usedCpuN1 )
 					{
 						a = res.usedCpuN1 / times.count / 64;
 					}
 					else a = 0;
-					if( res.usedCpuN2 / times.count * 10 > res.totalCpuN2 - res.usedCpuN2 )
+					if( res.usedCpuN2 / times.count * 10 > res.numN2 * 96 - res.usedCpuN2 )
 					//if( res.usedCpuN2 / times.count * 10 > res.totalCpuN2 - res.usedCpuN2 || 0.5 * res.totalCpuN2 < res.usedCpuN2 )
 					{
 						b = res.usedCpuN2 / times.count / 96;
 					}
 					else b = 0;
-					if( res.usedCpuN3 / times.count * 10 > res.totalCpuN3 - res.usedCpuN3 )
+					if( res.usedCpuN3 / times.count * 10 > res.numN3 * 64 - res.usedCpuN3 )
 					//if( res.usedCpuN3 / times.count * 10 > res.totalCpuN3 - res.usedCpuN3 || 0.5 * res.totalCpuN3 < res.usedCpuN3 )
 					{
-						c = res.usedCpuN3 / times.count / 104;
+						c = res.usedCpuN3 / times.count / 64;
 					}
 					else c = 0;
-					
-					//System.out.println( "当天用了N1物理机：" + res.usedCpuN1/64 + "台" );//到时候删
-					//System.out.println( "当天用了N2物理机：" + res.usedCpuN2/96 + "台" );//到时候删
-					//System.out.println( "当天用了N3物理机：" + res.usedCpuN3/104 + "台" );//到时候删
-					//System.out.println( "当天剩余N1物理机：" + (res.totalCpuN1-res.usedCpuN1)/64 + "台" );//到时候删
-					//System.out.println( "当天剩余N2物理机：" + (res.totalCpuN2-res.usedCpuN2)/96 + "台" );//到时候删
-					//System.out.println( "当天剩余N3物理机：" + (res.totalCpuN3-res.usedCpuN3)/104 + "台" );//到时候删
+					/*
+					System.out.println( "当天用了N1物理机：" + res.usedCpuN1/64 + "台" );//到时候删
+					System.out.println( "当天用了N2物理机：" + res.usedCpuN2/96 + "台" );//到时候删
+					System.out.println( "当天用了N3物理机：" + res.usedCpuN3/64 + "台" );//到时候删
+					System.out.println( "当天剩余N1物理机：" + (res.numN1 * 64 - res.usedCpuN1)/64 + "台" );//到时候删
+					System.out.println( "当天剩余N2物理机：" + (res.numN2 * 96 - res.usedCpuN2)/96 + "台" );//到时候删
+					System.out.println( "当天剩余N3物理机：" + (res.numN3 * 64 - res.usedCpuN3)/64 + "台" );//到时候删
+					*/
 					
 					
 					if( a!=0 )
@@ -207,54 +427,15 @@ public class Elastic
 						System.out.println( "报备N3物理机：" + c + "台" );//到时候删
 					
 					//报备测试
-					nc.Report( a, b, c, ncListNew, times, price );
+					reNC = reNC + newN1 + newN2 + newN3;
+					nc.Report( newN1, newN2, newN3, ncListNew, times, price );
+					newN1 = 0;
+					newN2 = 0;
+					newN3 = 0;
 					nc.Write( "new_nc.csv", ncListNew, times );
 					//报备成本
 					price.OneCost( 0, 0, 0 );
 					price.Cost( table, res );
-					
-					times.NextDay();
-					flag = 0;
-					price.oneCost=0;
-					price.dayCost=0;
-					price.dayCost=0;
-					price.buhuo = 0;
-					price.duangong =0;
-				}
-			}
-			
-
-			
-			else if( i>=10001 )
-			{
-				if( k<20 )
-				{
-					k++;
-					fileName = "input_vm_" + String.valueOf( k ) + ".csv";
-					temp = 1;
-				}
-				else
-				{
-					//以下块为重复，因为是最后一天，单独加一个循环
-					//当天结束，写当天NC流水和vm流水
-					//vm.Write( vmList, times );
-					nc.Write( "nc.csv", ncList, times );
-					
-					for ( i = 0; i < vmList.size(); i++ )
-					{
-						vm = vmList.get(i);
-						if( date.contentEquals( vm.createDate ) )
-						{
-							vmListC.add(vm);
-						}
-					}
-					vm.Write( vmListC, times );
-					vmListC.clear();
-					
-					//当天23点59分，计算收益和成本
-					price.Income( table, res );
-					price.Cost( table, res );
-					//System.out.println( "main成本汇总：" +  price.sumCost );
 					
 					//当天23点59分，释放当天要释放的资源，A是存量，B是释放
 					for ( i = 0; i < vmList.size(); i++ )
@@ -273,17 +454,15 @@ public class Elastic
 					vmList.clear();
 					res.release( vmListB, ncList, table );
 					vm.Write( vmListB, times );
-					//nc.Write( ncList, times );//试着打印一遍
 					
-					
-					System.out.println( "当天是第几天：" + times.count );
+					System.out.println( "之前是第几天：" + times.count );
 					times.NextDay();
 					flag = 0;
 					price.oneCost=0;
 					price.dayCost=0;
 					price.dayCost=0;
-					price.buhuo =0;
-					price.duangong=0;
+					price.buhuo = 0;
+					price.duangong =0;
 					System.out.println( "总收益：" + price.sumIncome + "元" );//到时候删
 					System.out.println( "总成本：" + price.sumCost + "元" );//到时候删
 					//本块跟上面重复

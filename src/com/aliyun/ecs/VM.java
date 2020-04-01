@@ -22,7 +22,8 @@ public class VM
 	String releaseDate;
 	String releaseTime;
 	
-	public void Assign( ArrayList<NC> ncList, Resource res, Price price )
+	//VM分配到物理机，成功返回1，空间不足返回0
+	public int Assign( ArrayList<NC> ncList, Resource res, Price price )
 	{
 		int i;
 		NC nc = null;
@@ -105,9 +106,12 @@ public class VM
 		}
 		if( ncId==0 )
 		{
+			//没有分配到物理机空间，断供情况
 			price.duangong = price.duangong + 24*cpu;
 			//System.out.println( "断供1次" );
+			return 0;
 		}
+		else return 1;
 	}
 	
 	public int ReadOne( int num, String fileName, Times times ) throws IOException

@@ -19,17 +19,17 @@ public class Files
 	    if( file1.exists() )
 	    {
 	    	file1.delete();
-	        System.out.println( "vm.csv已存在，已经帮你扔掉了，下一个更好！" );
+	        System.out.println( "vm.csv已存在，已经帮你删掉了，下一个更好！" );
 	    }
 	    if( file2.exists() )
 	    {
 	    	file2.delete();
-	        System.out.println( "nc.csv已存在，已经帮你扔掉了，下一个更乖！" );
+	        System.out.println( "nc.csv已存在，已经帮你删掉了，下一个更乖！" );
 	    }
 	    if( file3.exists() )
 	    {
 	    	file3.delete();
-	        System.out.println( "new_nc.csv已存在，已经帮你扔掉了，下一个更听话！" );
+	        System.out.println( "new_nc.csv已存在，已经帮你删掉了，下一个更听话！" );
 	    }
 	    
 	    files.TitleVM( "vm.csv" );
