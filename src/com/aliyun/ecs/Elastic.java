@@ -15,7 +15,7 @@ public class Elastic
 		int k=1;
 		int flag=0;
 		int temp=1;
-		String fileName = "input_vm\\input_vm_" + String.valueOf( k ) + ".csv";
+		String fileName = "input_vm_" + String.valueOf( k ) + ".csv";
 		VM vm = new VM();
 		NC nc = new NC();
 		Times times = new Times();
@@ -28,7 +28,11 @@ public class Elastic
 		Adjust adjust = new Adjust();
 		adjust.Index();
 		
-		//读取第一行vm数据
+		//把目录下旧输出文件去掉
+		Files files = new Files();
+		files.First();
+		
+		//读取第一行VM数据
 		vm.ReadOne( i, fileName, times );
 		
 		//初始化当前时间
@@ -39,8 +43,8 @@ public class Elastic
 		ArrayList<NC> ncList = new ArrayList<>();
 		ArrayList<NC> ncListNew = new ArrayList<>();
 		
-		nc.Add( 30, 50, 10, ncList, times, res );
-		price.OneCost( 30, 50, 10 );
+		nc.Add( 200, 600, 5, ncList, times, res );
+		price.OneCost( 200, 600, 5 );
 		
 		//构建vmList表，朝里顺序写入
 		ArrayList<VM> vmList = new ArrayList<>();
@@ -48,7 +52,7 @@ public class Elastic
 		ArrayList<VM> vmListB = new ArrayList<>();
 		ArrayList<VM> vmListC = new ArrayList<>();
 		
-		System.out.println( "开始遍历input_vm目录下的csv文件，这个过程大概需要5分钟..." );
+		System.out.println( "开始遍历目录下的csv文件，这个过程大概需要5分钟..." );
 		while( true )
 		{
 			date = times.getDate();
@@ -64,12 +68,12 @@ public class Elastic
 				//判断是不是第0秒，是的话使能物理机
 				if( times.getTime().contentEquals( "00:00:00" ) )
 				{
-					nc.Enable( ncList, ncListNew, times, res );
+					nc.Enable( ncList, ncListNew, times, res, price );
 				}
 				
 				times.NextSec();
 				
-				//存入一行vm数据
+				//存入一行VM数据
 				vm = new VM();
 				if( vm.ReadOne( i, fileName, times ) == 0 )
 				{
@@ -92,7 +96,7 @@ public class Elastic
 			{
 				if( flag==1 )
 				{
-					//当天结束，写当天NC流水和vm流水
+					//当天结束，写当天NC流水和VM流水
 					//vm.Write( vmList, times );
 					nc.Write( "nc.csv", ncList, times );
 					
@@ -107,7 +111,7 @@ public class Elastic
 					vm.Write( vmListC, times );
 					vmListC.clear();
 					
-					//当天23点59分，计算收益和成本
+					//当天23点59分，计算收益
 					price.Income( table, res );
 					
 					//当天23点59分，释放当天要释放的资源，A是存量，B是释放
@@ -159,24 +163,48 @@ public class Elastic
 						}
 					}
 					
+					//System.out.println( "N1物理机CPU总数：" + res.totalCpuN1 + "个" );//到时候删
+					//System.out.println( "N2物理机CPU总数：" +res.totalCpuN2 + "个" );//到时候删
+					//System.out.println( "N3物理机CPU总数：" + res.totalCpuN3 + "个" );//到时候删
+					//System.out.println( "N1物理机使用到CPU：" + res.usedCpuN1 + "个" );//到时候删
+					//System.out.println( "N2物理机使用到CPU：" + res.usedCpuN2 + "个" );//到时候删
+					//System.out.println( "N3物理机使用到CPU：" + res.usedCpuN3 + "个" );//到时候删
+					
+					
 					//如果够，不补货，不够了才补货
 					if( res.usedCpuN1 / times.count * 10 > res.totalCpuN1 - res.usedCpuN1 )
+					//if( res.usedCpuN1 / times.count * 10 > res.totalCpuN1 - res.usedCpuN1 || 0.5 * res.totalCpuN1 < res.usedCpuN1 )
 					{
 						a = res.usedCpuN1 / times.count / 64;
 					}
 					else a = 0;
 					if( res.usedCpuN2 / times.count * 10 > res.totalCpuN2 - res.usedCpuN2 )
+					//if( res.usedCpuN2 / times.count * 10 > res.totalCpuN2 - res.usedCpuN2 || 0.5 * res.totalCpuN2 < res.usedCpuN2 )
 					{
-						b = res.usedCpuN2 / times.count / 64;
+						b = res.usedCpuN2 / times.count / 96;
 					}
 					else b = 0;
 					if( res.usedCpuN3 / times.count * 10 > res.totalCpuN3 - res.usedCpuN3 )
+					//if( res.usedCpuN3 / times.count * 10 > res.totalCpuN3 - res.usedCpuN3 || 0.5 * res.totalCpuN3 < res.usedCpuN3 )
 					{
-						c = res.usedCpuN3 / times.count / 64;
+						c = res.usedCpuN3 / times.count / 104;
 					}
 					else c = 0;
 					
-						
+					//System.out.println( "当天用了N1物理机：" + res.usedCpuN1/64 + "台" );//到时候删
+					//System.out.println( "当天用了N2物理机：" + res.usedCpuN2/96 + "台" );//到时候删
+					//System.out.println( "当天用了N3物理机：" + res.usedCpuN3/104 + "台" );//到时候删
+					//System.out.println( "当天剩余N1物理机：" + (res.totalCpuN1-res.usedCpuN1)/64 + "台" );//到时候删
+					//System.out.println( "当天剩余N2物理机：" + (res.totalCpuN2-res.usedCpuN2)/96 + "台" );//到时候删
+					//System.out.println( "当天剩余N3物理机：" + (res.totalCpuN3-res.usedCpuN3)/104 + "台" );//到时候删
+					
+					
+					if( a!=0 )
+						System.out.println( "报备N1物理机：" + a + "台" );//到时候删
+					if( b!=0 )
+						System.out.println( "报备N2物理机：" + b + "台" );//到时候删
+					if( c!=0 )
+						System.out.println( "报备N3物理机：" + c + "台" );//到时候删
 					
 					//报备测试
 					nc.Report( a, b, c, ncListNew, times, price );
@@ -202,7 +230,7 @@ public class Elastic
 				if( k<20 )
 				{
 					k++;
-					fileName = "input_vm\\input_vm_" + String.valueOf( k ) + ".csv";
+					fileName = "input_vm_" + String.valueOf( k ) + ".csv";
 					temp = 1;
 				}
 				else
@@ -248,7 +276,7 @@ public class Elastic
 					//nc.Write( ncList, times );//试着打印一遍
 					
 					
-					
+					System.out.println( "当天是第几天：" + times.count );
 					times.NextDay();
 					flag = 0;
 					price.oneCost=0;
@@ -256,6 +284,8 @@ public class Elastic
 					price.dayCost=0;
 					price.buhuo =0;
 					price.duangong=0;
+					System.out.println( "总收益：" + price.sumIncome + "元" );//到时候删
+					System.out.println( "总成本：" + price.sumCost + "元" );//到时候删
 					//本块跟上面重复
 					
 					break;

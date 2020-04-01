@@ -1,5 +1,8 @@
 package com.aliyun.ecs;
 
+//Times是，用于把表格时间和程序时间作比对，分割每一天
+//后续应改成static
+//TenDay：返回十天后的日期，报备物理机时用到
 public class Times
 {
 	int year;
@@ -10,6 +13,7 @@ public class Times
 	int sec;
 	static int count;
 	
+	//返回十天后的日期，报备物理机时用到
 	public String TenDay()
 	{
 		int howMany[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
@@ -18,9 +22,11 @@ public class Times
 		int days = day;
 		int i;
 		
+		//闰年判定
         if( year%4==0 && year%100!=0 || year%400==0 )
         	howMany[1] = 29;
 		
+        //日进位判定，防止出现32日
 		for( i=1; i<11; i++ )
 		{
 			days++;
@@ -38,6 +44,7 @@ public class Times
 		return String.format( "%04d-%02d-%02d", years, months, days );
 	}
 	
+	//下一天
 	public void NextDay()
 	{
 		int howMany[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };

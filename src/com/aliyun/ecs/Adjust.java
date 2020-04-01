@@ -4,10 +4,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
+//Adjust是分配最优化，它本来应该放在
+//我们希望：当
 public class Adjust
 {
 	int[][] sortList = new int[3][6224];
 	
+	//这是构建一张索引表的方法，这个表是N2系列物理机按价值的最优排布方式
+	//例如：对于一台N2类型物理机，32台N1，16台N2
 	public void Index()
 	{
 		double[][] arr = new double[4][6224];

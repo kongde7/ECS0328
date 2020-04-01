@@ -5,6 +5,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
+//NC是物理机对象，包含物理机的属性和物理机对应方法
+//Enable：报备的物理机可以开始服务
+//Report：报备三种物理机的台数，分别为n1，n2，n3
+
 public class NC
 {
 	int ncId;
@@ -18,9 +22,11 @@ public class NC
 	String enableTime;
 	static int count;
 	
-	public void Enable( ArrayList<NC> ncList, ArrayList<NC> ncListNew, Times times, Resource res )
+	//Enable：报备的物理机可以开始服务
+	public void Enable( ArrayList<NC> ncList, ArrayList<NC> ncListNew, Times times, Resource res, Price price )
 	{
-		int i;
+		Table table = new Table();
+		int i, a=0, b=0, c=0;
 		NC nc = null;
 		String date = times.getDate();
 		
@@ -36,11 +42,25 @@ public class NC
 				res.Add(nc);
 				ncListNew.remove(i);
 				i--;
+				if( nc.machineType.contentEquals( table.nameN1 ) )
+				{
+					a++;
+				}
+				else if( nc.machineType.contentEquals( table.nameN1 ) )
+				{
+					b++;
+				}
+				else if( nc.machineType.contentEquals( table.nameN1 ) )
+				{
+					c++;
+				}
+				
 			}
 		}
+		price.OneCost( a, b, c );
 	}
 	
-	//报备
+	//Report：报备三种物理机的台数，分别为n1，n2，n3
 	public void Report( int n1, int n2, int n3, ArrayList<NC> ncListNew, Times times, Price price )
 	{
 		int i;
@@ -89,6 +109,7 @@ public class NC
 		price.buhuo = 16*(n1+n2+n3);
 	}
 	
+	//Add
 	public void Add( int n1, int n2, int n3, ArrayList<NC> ncList, Times times, Resource res )
 	{
 		int i;

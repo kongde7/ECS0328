@@ -55,7 +55,7 @@ public class VM
 		}
 		else if( vmType.contentEquals(table.nameR1_l) || vmType.contentEquals(table.nameR1_xl) || vmType.contentEquals(table.nameR1_2xl) )
 		{
-			for( i=0; i<ncList.size(); i++ )
+			for( i=ncList.size()-1; i>=0; i-- )
 			{
 				nc = ncList.get(i);
 				//先判断物理机类型是不是符合要求
@@ -105,7 +105,7 @@ public class VM
 		}
 		if( ncId==0 )
 		{
-			price.duangong = 24*cpu;
+			price.duangong = price.duangong + 24*cpu;
 			//System.out.println( "断供1次" );
 		}
 	}

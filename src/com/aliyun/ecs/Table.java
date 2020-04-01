@@ -1,5 +1,7 @@
 package com.aliyun.ecs;
 
+//Table是价格表，方便统一修改定价和规格，无其它作用
+//后续完善变量要写成static
 public class Table
 {
 	String nameN1;
@@ -109,5 +111,4 @@ public class Table
 		perR1_xl = 1.33;
 		perR1_2xl = 2.65;
 	}
-	
 }
