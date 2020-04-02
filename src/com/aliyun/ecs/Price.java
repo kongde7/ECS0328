@@ -64,10 +64,17 @@ public class Price
 		double sumN2 = perN2 * numN2;
 		double sumN3 = perN3 * numN3;
 		
-		oneCost = sumN1 + sumN2 + sumN3;
-		sumCost = sumCost + oneCost;
-		System.out.println( "当天物理机购买成本：" + String.format( "%.2f", oneCost ) + "     当天报备成本：" + String.format( "%.2f", buhuo ) + "     当天断供成本：" + String.format( "%.2f", duangong ) );
-		oneCost = oneCost + buhuo + duangong;
+		//有参数传入，表示新购物理机，否则只是打印数字，仅展示
+		if( numN1!=0 || numN2!=0 || numN3!=0 )
+		{
+			oneCost = sumN1 + sumN2 + sumN3;
+			sumCost = sumCost + oneCost;
+		}
+		else
+		{
+			System.out.println( "当天物理机购买成本：" + oneCost + "     当天报备成本：" + buhuo + "     当天断供成本：" + duangong );
+			oneCost = oneCost + buhuo + duangong;
+		}
 		return oneCost;
 	}
 }
