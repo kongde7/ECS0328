@@ -56,7 +56,7 @@ public class Elastic
 		price.OneCost( 50, 100, 10 );
 		
 		//构建vmList表，朝里顺序写入
-		System.out.println( "开始遍历input_vm目录下的csv文件，这个过程大概需要5分钟..." );
+		System.out.println( "开始遍历input_vm目录下的csv文件，这个过程大概需要4分钟..." );
 		while( true )
 		{
 			date = times.getDate();
@@ -124,6 +124,7 @@ public class Elastic
 					vm.Write( vmListC, times );
 					vmListC.clear();
 					
+					/*/////////这个方法不行，我拿掉了，但是ecs上验收的时候放的是这个方法，好尴尬。现在ecs上已经改了//////////////////////
 					//全新加入流程，报备新版
 					logN1 = 0;
 					logN2 = 0;
@@ -175,6 +176,7 @@ public class Elastic
 					reNC = newN1 + newN2 + newN3;
 					//System.out.println( "N1、N2、N3需求量：" + logN1 +" "+ logN2 +" "+ logN3 );//到时候删
 					//System.out.println( "N1、N2、N3报备：" + newN1 +" "+ newN2 +" "+ newN3 );//到时候删
+					*/
 					
 					//当天23点59分，计算收益
 					price.Income( table, res );
@@ -238,13 +240,13 @@ public class Elastic
 					//这里存在一个误区，剩余物理机的CPU多并不能代表可用的多，因为内存先满
 					
 					//如果够，不补货，不够了才补货
-					if( res.usedCpuN1 / times.count * 10 > res.numN1 * 64 - res.usedCpuN1 )
+					if( res.usedCpuN1 / times.count * 30 > res.numN1 * 64 - res.usedCpuN1 )
 					//if( res.usedCpuN1 / times.count * 10 > res.totalCpuN1 - res.usedCpuN1 || 0.5 * res.totalCpuN1 < res.usedCpuN1 )
 					{
 						a = res.usedCpuN1 / times.count / 64;
 					}
 					else a = 0;
-					if( res.usedCpuN2 / times.count * 10 > res.numN2 * 96 - res.usedCpuN2 )
+					if( res.usedCpuN2 / times.count * 30 > res.numN2 * 96 - res.usedCpuN2 )
 					//if( res.usedCpuN2 / times.count * 10 > res.totalCpuN2 - res.usedCpuN2 || 0.5 * res.totalCpuN2 < res.usedCpuN2 )
 					{
 						b = res.usedCpuN2 / times.count / 96;
@@ -274,7 +276,8 @@ public class Elastic
 					
 					//报备测试
 					
-					nc.Report( 0, newN1+newN2+newN3, 0, ncListNew, times, price );
+					nc.Report( a, b, c, ncListNew, times, price );
+					//nc.Report( 0, newN1+newN2+newN3, 0, ncListNew, times, price );
 					newN1 = 0;
 					newN2 = 0;
 					newN3 = 0;
