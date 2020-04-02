@@ -52,8 +52,8 @@ public class Elastic
 		times.count = 1;
 		
 		//初始化NC台数，写入ncList表
-		nc.Add( 50, 100, 10, ncList, times, res );
-		price.OneCost( 50, 100, 10 );
+		nc.Add( 50, 300, 10, ncList, times, res );
+		price.OneCost( 50, 300, 10 );
 		
 		//构建vmList表，朝里顺序写入
 		System.out.println( "开始遍历input_vm目录下的csv文件，这个过程大概需要4分钟..." );
@@ -75,7 +75,7 @@ public class Elastic
 				if( times.getTime().contentEquals( "00:00:00" ) )
 				{
 					reNC = reNC - nc.Enable( ncList, ncListNew, times, res, price );
-					//System.out.println( "NC使能" + nc.Enable( ncList, ncListNew, times, res, price ) + "QQQ" );
+					//System.out.println( "NC使能" + nc.Enable( ncList, ncListNew, times, res, price ) );
 				}
 				
 				times.NextSec();
@@ -124,7 +124,7 @@ public class Elastic
 					vm.Write( vmListC, times );
 					vmListC.clear();
 					
-					/*/////////这个方法不行，我拿掉了，但是ecs上验收的时候放的是这个方法，好尴尬。现在ecs上已经改了//////////////////////
+					/*/////////这个方法不行，要用下面的方法。但是ecs上验收的时候放的正好是这个方法//////////////////////
 					//全新加入流程，报备新版
 					logN1 = 0;
 					logN2 = 0;
@@ -240,13 +240,13 @@ public class Elastic
 					//这里存在一个误区，剩余物理机的CPU多并不能代表可用的多，因为内存先满
 					
 					//如果够，不补货，不够了才补货
-					if( res.usedCpuN1 / times.count * 30 > res.numN1 * 64 - res.usedCpuN1 )
+					if( res.usedCpuN1 / times.count * 10 > res.numN1 * 64 - res.usedCpuN1 )
 					//if( res.usedCpuN1 / times.count * 10 > res.totalCpuN1 - res.usedCpuN1 || 0.5 * res.totalCpuN1 < res.usedCpuN1 )
 					{
 						a = res.usedCpuN1 / times.count / 64;
 					}
 					else a = 0;
-					if( res.usedCpuN2 / times.count * 30 > res.numN2 * 96 - res.usedCpuN2 )
+					if( res.usedCpuN2 / times.count * 10 > res.numN2 * 96 - res.usedCpuN2 )
 					//if( res.usedCpuN2 / times.count * 10 > res.totalCpuN2 - res.usedCpuN2 || 0.5 * res.totalCpuN2 < res.usedCpuN2 )
 					{
 						b = res.usedCpuN2 / times.count / 96;
@@ -258,7 +258,7 @@ public class Elastic
 						c = res.usedCpuN3 / times.count / 64;
 					}
 					else c = 0;
-					/*
+					
 					System.out.println( "当天用了N1物理机：" + res.usedCpuN1/64 + "台" );//到时候删
 					System.out.println( "当天用了N2物理机：" + res.usedCpuN2/96 + "台" );//到时候删
 					System.out.println( "当天用了N3物理机：" + res.usedCpuN3/64 + "台" );//到时候删
@@ -272,7 +272,7 @@ public class Elastic
 						System.out.println( "报备N2物理机：" + b + "台" );//到时候删
 					if( c!=0 )
 						System.out.println( "报备N3物理机：" + c + "台" );//到时候删
-					*/
+					
 					
 					//报备测试
 					
