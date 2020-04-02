@@ -3,19 +3,17 @@ package com.aliyun.ecs;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 
 public class Elastic
 {
 	public static void main( String[] args ) throws IOException
 	{
+		int max;
 		int reNC=0;
 		int newN1=0, newN2=0, newN3=0;
 		int logN1, logN2, logN3;
 		int a, b, c;
 		int i = 1;
-		int j;
 		int k=1;
 		int flag=0;
 		int temp=1;
@@ -29,6 +27,15 @@ public class Elastic
 		String date;
 		Log log = null;
 		
+		ArrayList<NC> ncList = new ArrayList<>();
+		ArrayList<NC> ncListNew = new ArrayList<>();
+		ArrayList<VM> vmList = new ArrayList<>();
+		ArrayList<VM> vmListA = new ArrayList<>();
+		ArrayList<VM> vmListB = new ArrayList<>();
+		ArrayList<VM> vmListC = new ArrayList<>();
+		ArrayList<VM> vmListStop = new ArrayList<>();
+		ArrayList<Log> logList = new ArrayList<>();
+		
 		//调优表测试
 		Adjust adjust = new Adjust();
 		adjust.Index();
@@ -41,23 +48,14 @@ public class Elastic
 		vm.ReadOne( i, fileName, times );
 		
 		//初始化当前时间
-		times.setDate(vm.createDate);
+		times.setDate( vm.createDate );
 		times.count = 1;
 		
 		//初始化NC台数，写入ncList表
-		ArrayList<NC> ncList = new ArrayList<>();
-		ArrayList<NC> ncListNew = new ArrayList<>();
-		
 		nc.Add( 50, 100, 10, ncList, times, res );
 		price.OneCost( 50, 100, 10 );
-		//构建vmList表，朝里顺序写入
-		ArrayList<VM> vmList = new ArrayList<>();
-		ArrayList<VM> vmListA = new ArrayList<>();
-		ArrayList<VM> vmListB = new ArrayList<>();
-		ArrayList<VM> vmListC = new ArrayList<>();
-		ArrayList<VM> vmListStop = new ArrayList<>();
-		ArrayList<Log> logList = new ArrayList<>();
 		
+		//构建vmList表，朝里顺序写入
 		System.out.println( "开始遍历input_vm目录下的csv文件，这个过程大概需要5分钟..." );
 		while( true )
 		{
@@ -81,6 +79,7 @@ public class Elastic
 				
 				//存入一行VM数据
 				vm = new VM();
+				//flag=1表示一个表示当天读完了，要换读下一天了
 				if( vm.ReadOne( i, fileName, times ) == 0 )
 				{
 					temp = i;
@@ -92,15 +91,15 @@ public class Elastic
 				//存表之前先分配
 				if( vm.Assign( ncList, res, price ) == 0 )
 				{
+					//如果返回0表示物理机已满，填写断供表
 					vmListStop.add(vm);
 				}
 				else
 				{
-					//资源表也要同步写入
+					//如果可以正常分配，资源表也要同步扣除资源数字
 					res.Assign( vm, table );
 				}
-				
-				
+				//把vm对象添加到表中，稍后输出csv文件
 				vmList.add( vm );
 			}
 			
@@ -136,14 +135,28 @@ public class Elastic
 					log = new Log();
 					log.Count( vmList, vmListStop, times, res );
 					logList.add( log );
+					max = 0;
 					for ( i = 0; i < logList.size(); i++ )
 					{
 						log = logList.get(i);
+						if( log.cpuN1Today + log.cpuN2Today + log.cpuN3Today > max )
+							max = log.cpuN1Today + log.cpuN2Today + log.cpuN3Today;
 						logN1 = logN1 + log.cpuN1Today;
 						logN2 = logN2 + log.cpuN2Today;
 						logN3 = logN3 + log.cpuN3Today;
 						if( times.getDate().contentEquals( log.date ) )
 						{
+							for ( i = 0; i < logList.size(); i++ )
+							{
+								log = logList.get(i);
+								if( log.cpuN1Today + log.cpuN2Today + log.cpuN3Today == max )
+								{
+									logN1 = logN1 - log.cpuN1Today;
+									logN2 = logN2 - log.cpuN2Today;
+									logN3 = logN3 - log.cpuN3Today;
+									break;
+								}
+							}
 							//把CPU需求数除以64转换成物理机需求数，其中N1最多能分配64核，N2最多能分配96核，N3最多能分配64核
 							logN1 = logN1 / ( i + 1 ) / 64;
 							logN2 = logN2 / ( i + 1 ) / 96;
@@ -165,7 +178,7 @@ public class Elastic
 					}
 					reNC = newN1 + newN2 + newN3;
 					System.out.println( "res.numN" + res.numN1+" "+reNC);
-					System.out.println( "N1、N2、N3需求量：" + logN1 +" "+ logN2 +" "+ logN3 +" "+ logList.size() );//到时候删
+					System.out.println( "N1、N2、N3需求量：" + logN1 +" "+ logN2 +" "+ logN3 );//到时候删
 					System.out.println( "N1、N2、N3报备：" + newN1 +" "+ newN2 +" "+ newN3 );//到时候删
 					
 					//计算要报备多少台NC
@@ -224,14 +237,14 @@ public class Elastic
 						c = res.usedCpuN3 / times.count / 64;
 					}
 					else c = 0;
-					/*
+					
 					System.out.println( "当天用了N1物理机：" + res.usedCpuN1/64 + "台" );//到时候删
 					System.out.println( "当天用了N2物理机：" + res.usedCpuN2/96 + "台" );//到时候删
 					System.out.println( "当天用了N3物理机：" + res.usedCpuN3/64 + "台" );//到时候删
 					System.out.println( "当天剩余N1物理机：" + (res.numN1 * 64 - res.usedCpuN1)/64 + "台" );//到时候删
 					System.out.println( "当天剩余N2物理机：" + (res.numN2 * 96 - res.usedCpuN2)/96 + "台" );//到时候删
 					System.out.println( "当天剩余N3物理机：" + (res.numN3 * 64 - res.usedCpuN3)/64 + "台" );//到时候删
-					
+					/*
 					if( a!=0 )
 						System.out.println( "报备N1物理机：" + a + "台" );//到时候删
 					if( b!=0 )
@@ -242,7 +255,7 @@ public class Elastic
 					
 					//报备测试
 					
-					nc.Report( newN1, newN2, newN3, ncListNew, times, price );
+					nc.Report( 0, newN1+newN2+newN3, 0, ncListNew, times, price );
 					newN1 = 0;
 					newN2 = 0;
 					newN3 = 0;
@@ -348,7 +361,6 @@ public class Elastic
 					{
 						newN3 = logN3 - res.numN3 - reNC;
 					}
-					System.out.println( "" + res.numN1 + " " + reNC );
 					System.out.println( "N1、N2、N3需求量：" + logN1 +" "+ logN2 +" "+ logN3 +" "+ logList.size() );//到时候删
 					System.out.println( "N1、N2、N3报备：" + newN1 +" "+ newN2 +" "+ newN3 );//到时候删
 					

@@ -48,6 +48,7 @@ public class Price
 		sy = ( dayIncome - dayCost ) / dayCost * 100;
 		
 		System.out.println( "当天收益率：" + String.format( "%.2f", sy ) + "%" );
+		System.out.println( "合计成本：" + sumCost + "     合计收益："+sumIncome );
 		
 		return dayCost;
 	}
